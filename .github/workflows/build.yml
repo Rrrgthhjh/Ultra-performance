@@ -1,0 +1,53 @@
+
+name: Build ULTRA PERFORMANCE
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'ultra-performance-source-upload.zip'
+      - '.github/workflows/build.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar projeto
+        uses: actions/checkout@v4
+
+      - name: Configurar Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Configurar Gradle
+        uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.8'
+
+      - name: Extrair código-fonte
+        run: |
+          mkdir -p project
+          unzip -q ultra-performance-source-upload.zip -d project
+
+      - name: Compilar ULTRA PERFORMANCE
+        working-directory: project
+        run: gradle build
+
+      - name: Compilar addon Torcherino
+        working-directory: project/torcherino-compat
+        run: gradle build
+
+      - name: Disponibilizar JARs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ultra-performance-jars
+          path: |
+            project/build/libs/*.jar
+            project/torcherino-compat/build/libs/*.jar
+          if-no-files-found: error
